@@ -19,69 +19,37 @@ Checkout this repository with git or copy the files manually using the GitHub ra
 ----
 git clone https://github.com/opennms-config-modules/cassandra.git
 cd cassandra
-cp snmp-graph.properties.d/cassandra-graph.properties /opt/opennms/etc/snmp-graph.properties.d
+cp snmp-graph.properties.d/cassandra-3x-graph.properties /opt/opennms/etc/snmp-graph.properties.d
+cp datacollection/cassandra-3x.xml /opt/opennms/etc/jmx-datacollection-config.d
 ----
 
 == Configure Collectd
 
 Add the following lines `collectd-configuration.xml` in the `in the default installed ``example1` package.
-The `collector service` needs to be added on the very end of the file, it tells OpenNMS to the XML collector for this type of service.
 
 .Create a new collection service for the Cassandra metrics
 [source, xml]
 ----
-<service name="JMX-Cassandra" interval="300000" user-defined="false" status="on">
-    <parameter key="collection" value="jmx-cassandra" />
+<service name="JMX-Cassandra" interval="30000" user-defined="false" status="on">
+    <parameter key="port" value="7199"/>
+    <parameter key="retry" value="2"/>
+    <parameter key="timeout" value="3000"/>
+    <parameter key="rrd-base-name" value="jmx-cassandra"/>
+    <parameter key="collection" value="jmx-cassandra3x"/>
+    <parameter key="thresholding-enabled" value="true"/>
+    <parameter key="ds-name" value="jmx-cassandra"/>
+    <parameter key="friendly-name" value="jmx-cassandra"/>
+    <parameter key="protocol" value="rmi"/>
+    <parameter key="urlPath" value="/jmxrmi"/>
+    <parameter key="factory" value="PASSWORD-CLEAR"/>
+    <parameter key="username" value="cassandra"/>
+    <parameter key="password" value="cassandra"/>
 </service>
 
-
+<collector service="JMX-Cassandra" class-name="org.opennms.netmgt.collectd.Jsr160Collector"/>
 ----
 
-Create the `xml-datacollection-config.xml` which defines RRD configuration.
-
-[source, xml]
-----
-<xml-datacollection-config rrdRepository="/opt/opennms/share/rrd/snmp/" <1>
-                           xmlns="http://xmlns.opennms.org/xsd/config/xml-datacollection">
-    <xml-collection name="elasticsearch-cluster-status">
-        <rrd step="300">
-            <rra>RRA:AVERAGE:0.5:1:2016</rra>
-            <rra>RRA:AVERAGE:0.5:12:1488</rra>
-            <rra>RRA:AVERAGE:0.5:288:366</rra>
-            <rra>RRA:MAX:0.5:288:366</rra>
-            <rra>RRA:MIN:0.5:288:366</rra>
-        </rrd>
-        <xml-source url="http://elasticip:9200/_cluster/stats">
-            <import-groups>xml-datacollection/elasticsearch-cluster-status.xml</import-groups>
-        </xml-source>
-    </xml-collection>
-</xml-datacollection-config>
-----
-<1> OpenNMS home relative path to persist RRD files
-<2> URL to Elasticsearch Cluster statistics ReST service
-<3> Instead of `YOUR-SERVER` you can also use `{ipaddr}` which is replaced with the IP interface address of the assigned `Elasticsearch` service
-<4> Include pre-configured metrics configuration for data collection
-
-== Test Elasticsearch Cluster Status
-
-The _Elasticsearch_ service can be used to test if the cluster status is green and ok with _Pollerd_.
-For this case the _HTTP Monitor_ can be used with the following configuration:
-
-[source,xml]
-----
-<service name="Elasticsearch" interval="300000" user-defined="true" status="on">
-  <parameter key="retry" value="1"/>
-  <parameter key="timeout" value="3000"/>
-  <parameter key="port" value="9200"/>
-  <parameter key="url" value="/_cluster/stats"/>
-  <parameter key="response" value="200-202,299"/>
-  <parameter key="response-text" value="~.*status.:.green.*"/>
-</service>
-
-<monitor service="Elasticsearch" class-name="org.opennms.netmgt.poller.monitors.HttpMonitor" />
-----
-
-Restart OpenNMS and provision a service on your nodes IP interface named `Elasticsearch`.
+Restart OpenNMS and provision a service on your nodes IP interface named `JMX-Cassandra`.
 
 == Author
 ronny@opennms.org
