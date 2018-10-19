@@ -19,7 +19,7 @@ Checkout this repository with git or copy the files manually using the GitHub ra
 ----
 git clone https://github.com/opennms-config-modules/cassandra.git
 cd cassandra
-cp snmp-graph.properties.d/cassandra-3x-graph.properties /opt/opennms/etc/snmp-graph.properties.d
+cp graphs/cassandra-3x-graph.properties /opt/opennms/etc/snmp-graph.properties.d
 cp datacollection/cassandra-3x.xml /opt/opennms/etc/jmx-datacollection-config.d
 ----
 
